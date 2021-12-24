@@ -11,7 +11,7 @@ export function SignIn() {
 
   return (
     <View style={styles.container}>
-      <Image source={IlustrationImg} style={styles.image}/>
+      <Image source={IlustrationImg} style={styles.image} resizeMode='stretch'/>
       <View style={styles.content}>
         <Text style={styles.title}>
           Organize {`\n`}
