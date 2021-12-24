@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, TextInput } from 'react-native';
+import { Text, View, TextInput,Image } from 'react-native';
+
+import IlustrationImg from "../../assets/illustration.png"
 
 import { styles } from './styles';
 
@@ -9,16 +11,8 @@ export function SignIn() {
 
   return (
     <View style={styles.container}>
-      <Text>Hello, Syri</Text>
-
-      <TextInput 
-      style={styles.input}
-      onChangeText={setText}
-      />
-
-      <Text>
-        {text}
-      </Text>
+      <Image source={IlustrationImg}/>
+      
       <StatusBar style="auto" />
     </View>
   );
