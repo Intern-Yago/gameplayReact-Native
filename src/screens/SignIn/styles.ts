@@ -12,6 +12,9 @@ export const styles = StyleSheet.create({
       width:'100%',
       height:360
     },
+    content:{
+      marginTop:-40,
+    },
     title:{
       color: theme.color.heading,
       textAlign: 'center',
