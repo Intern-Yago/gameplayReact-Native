@@ -8,7 +8,14 @@ import { SignIn } from '../screens/SignIn'
 const {Navigator, Screen} = createStackNavigator()
 export function AuthRoutes(){
     return(
-        <Navigator>
+        <Navigator
+            screenOptions={{
+                headerShown:false,
+                cardStyle:{
+                    backgroundColor: theme.color.secondary100
+                }
+            }}
+        >
             <Screen
             name='SignIn'
             component={SignIn}
