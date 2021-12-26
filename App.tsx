@@ -6,8 +6,10 @@ import { Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter'
 import {Rajdhani_500Medium, Rajdhani_700Bold} from "@expo-google-fonts/rajdhani"
 
 import { Home } from './src/screens/Home'
-//import { SignIn } from './src/screens/SignIn';
+import { SignIn } from './src/screens/SignIn';
 import {Background} from './src/components/Background'
+import { Routes } from './src/routes'
+
 
 export default function App() {
   const [fonstLoaded] = useFonts({
@@ -26,7 +28,7 @@ export default function App() {
           backgroundColor="transparent"
           translucent
         />
-      <Home/>
+      <SignIn/>
     </Background>
   );
 }
