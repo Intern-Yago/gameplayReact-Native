@@ -55,25 +55,22 @@ export function Home(){
                 <Profile/>
                 <ButtonAdd/>
             </View>
-            <View>
-                <CategorySelect
-                    categorySelected={category}
-                    setCategory={handleCategorySelect}
-                />   
-                <View style={styles.content}>
-                    <ListHeader title="Partidas agendadas" subtitle="Total 6"/>
-                    <FlatList
-                        data={appointments}
-                        keyExtractor={item => item.id}
-                        renderItem={({item})=>(
-                           <Appointment data={item}/>
-                        )}
-                        ItemSeparatorComponent={()=> <ListDivider/>}
-                        style={styles.matches}
-                        showsVerticalScrollIndicator={false}
-
-                    />
-                </View>             
+            <CategorySelect
+                categorySelected={category}
+                setCategory={handleCategorySelect}
+            />   
+            <View style={styles.content}>
+                <ListHeader title="Partidas agendadas" subtitle="Total 6"/>
+                <FlatList
+                    data={appointments}
+                    style={styles.matches}
+                    keyExtractor={item => item.id}
+                    showsVerticalScrollIndicator={false}
+                    ItemSeparatorComponent={()=> <ListDivider/>}
+                    renderItem={({item})=>(
+                        <Appointment data={item}/>
+                    )}
+                />           
             </View>
         </View>
     )
