@@ -19,7 +19,7 @@ export function Category({
     title, 
     icon:Icon, 
     checked = false,
-    hasCheckBox=true,
+    hasCheckBox=false,
     ...rest
     }:props){
     const {secondary40, secondary50, secondary70, secondary85} = theme.color
