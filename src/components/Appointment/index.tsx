@@ -6,10 +6,14 @@ import { theme } from "../../global/styles/theme";
 import { categories } from "../../utils/categories";
 import { GuildIcon } from "../GuildIcon";
 import PlayerSvg from '../../assets/player.svg'
+import DateSvg from '../../assets/calendar.svg'
 import { styles } from "./style";
 
 export type GuildProps = {
-    owner: true
+    id: string,
+    name:string,
+    icon:null,
+    owner: boolean
 }
 
 export type AppointmentProps = {
@@ -42,13 +46,21 @@ export function Appointment({data,...rest}:props){
                         { category.title }
                         </Text>
                     </View>
-                    <View style={styles.playersInfo}>
-                        <PlayerSvg 
-                            fill={owner ? primary : on}
-                        />
-                        <Text style={[styles.player, {color:owner ? primary: on}]}>
-                            {owner ? 'Anfitrião': 'Visitante'}
-                        </Text>
+                    <View style={styles.footer}>
+                        <View style={styles.dateInfo}>
+                            <DateSvg/>
+                            <Text style={styles.date}>
+                                {data.date}
+                            </Text>
+                        </View>
+                        <View style={styles.playersInfo}>
+                            <PlayerSvg 
+                                fill={owner ? primary : on}
+                            />
+                            <Text style={[styles.player, {color:owner ? primary: on}]}>
+                                {owner ? 'Anfitrião': 'Visitante'}
+                            </Text>
+                        </View>
                     </View>
                 </View>
             </View>
