@@ -2,16 +2,11 @@ import React from 'react';
 import { Fontisto } from '@expo/vector-icons';
 import { BorderlessButton } from 'react-native-gesture-handler';
 
-import {
-  ImageBackground,
-  Text,
-  View,
-  FlatList
-} from 'react-native';
+import {ImageBackground,Text,View,FlatList} from 'react-native';
 
-import { theme } from '../../global/styles/theme';
 import { styles } from './style';
 import BannerImg from '../../assets/banner.png';
+import { theme } from '../../global/styles/theme';
 
 import { ListDivider } from '../../components/ListDivider';
 import { Background } from '../../components/Background';
