@@ -75,6 +75,11 @@ export function AppointmentDetails(){
                     <Member data={item}/>
                 )}
             />
+            <View style={styles.footer}>
+                <ButtonIcon
+                    title='Entrar na partida'
+                />
+            </View>
         </Background>
     )
 }

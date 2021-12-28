@@ -14,7 +14,6 @@ type MemberProps = {
 
 type props={
     data:MemberProps,
-
 }
 
 export function Member({data}:props){
@@ -30,7 +29,6 @@ export function Member({data}:props){
                 <View style={styles.status}>
                     <View
                         style={[styles.bulletStatus,{backgroundColor : isOnline ? on : primary}]}
-
                     />
                     <Text style={styles.nameStatus}>
                         {isOnline?'Disponível':'Ocupado'}
