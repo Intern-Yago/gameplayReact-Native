@@ -11,7 +11,12 @@ type props = {
 
 export function Guilds({handleGuildSelect}:props){
     const guilds = [
-        {id:'1',name:'lend', icon:'imagem', owner:true}
+        {id:'1',name:'lend', icon:'imagem', owner:true},
+        {id:'2',name:'lend', icon:'imagem', owner:true},
+        {id:'3',name:'lend', icon:'imagem', owner:true},
+        {id:'4',name:'lend', icon:'imagem', owner:true},
+        {id:'5',name:'lend', icon:'imagem', owner:true},
+        {id:'6',name:'lend', icon:'imagem', owner:true}
     ]
     return(
         <View style={styles.container}>
@@ -27,6 +32,7 @@ export function Guilds({handleGuildSelect}:props){
                 showsVerticalScrollIndicator={false}
                 ItemSeparatorComponent={()=><ListDivider/>}
                 style={styles.guilds}
+                contentContainerStyle={{paddingBottom:30, paddingTop:10}}
             />
         </View>
     )
