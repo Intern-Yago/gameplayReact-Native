@@ -5,6 +5,7 @@ import { theme } from '../global/styles/theme'
 
 import { Home } from '../screens/Home'
 import { SignIn } from '../screens/SignIn'
+import { AppointmentCreate } from '../screens/AppointmentCreate'
 import { AppointmentDetails } from '../screens/AppointmentDetails'
 
 const {Navigator, Screen} = createStackNavigator()
@@ -29,6 +30,10 @@ export function AuthRoutes(){
             <Screen
             name='AppointmentDetails'
             component={AppointmentDetails}
+            />
+            <Screen
+            name='AppointmentCreate'
+            component={AppointmentCreate}
             />
         </Navigator>
     )
