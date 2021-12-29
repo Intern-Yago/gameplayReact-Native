@@ -6,7 +6,7 @@ import { styles } from "./style";
 import { GuildIcon } from "../GuildIcon";
 import { theme } from "../../global/styles/theme";
 
-type GuildProps = {
+export type GuildProps = {
     id:string
     name:string
     icon:string|null
