@@ -8,6 +8,8 @@ import {Rajdhani_500Medium, Rajdhani_700Bold} from "@expo-google-fonts/rajdhani"
 import { Routes } from './src/routes'
 import { Background } from './src/components/Background'
 
+import { AuthProvider } from './hooks/auth'
+
 export default function App() {
   const [fonstLoaded] = useFonts({
     Inter_400Regular,
@@ -25,7 +27,9 @@ export default function App() {
           backgroundColor="transparent"
           translucent
         />
-      <Routes/>
+        <AuthProvider>
+          <Routes/>
+        </AuthProvider>
     </Background>
   );
 }
