@@ -93,34 +93,10 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          eas build --platform android --profile preview --non-interactive --no-wait --json > build-raw.txt || true
-          cat build-raw.txt
-          sed -n '/^[\[{]/,$p' build-raw.txt > build-init.json
-          BUILD_ID=$(jq -r '.[0].id // .id // empty' build-init.json)
-          echo "Build iniciado na nuvem Expo com ID: $BUILD_ID"
-
-          if [ -z "$BUILD_ID" ]; then
-            echo "Não foi possível extrair o ID do build. Verifique os logs."
-            exit 1
-          fi
-
-          while true; do
-            eas build:view "$BUILD_ID" --json > status-raw.txt || true
-            sed -n '/^[\[{]/,$p' status-raw.txt > build-status.json
-            STATUS=$(jq -r '.[0].status // .status // empty' build-status.json)
-            echo "Status atual do build ($BUILD_ID): $STATUS"
-
-            if [ "$STATUS" == "FINISHED" ] || [ "$STATUS" == "finished" ]; then
-              echo "Build concluído com sucesso!"
-              break
-            elif [ "$STATUS" == "ERRORED" ] || [ "$STATUS" == "errored" ] || [ "$STATUS" == "CANCELED" ] || [ "$STATUS" == "canceled" ]; then
-              echo "Build falhou na nuvem Expo."
-              exit 1
-            fi
-            sleep 20
-          done
-
-          BUILD_URL=$(jq -r '.[0].artifacts.buildUrl // .artifacts.buildUrl' build-status.json)
+          eas build --platform android --profile preview --non-interactive
+          eas build:list --platform android --limit 1 --json > build-list.json
+          cat build-list.json
+          BUILD_URL=$(jq -r '.[0].artifacts.buildUrl // .artifacts.buildUrl' build-list.json)
           echo "Baixando APK de: $BUILD_URL"
           curl -L "$BUILD_URL" -o gameplay-app.apk
 
