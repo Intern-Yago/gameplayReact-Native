@@ -21,6 +21,10 @@ jobs:
     name: Build APK & Publish Release
     runs-on: ubuntu-latest
 
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: true
+
     permissions:
       contents: write
 
