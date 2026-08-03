@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.1] - 2026-08-03
+- Lançamento automatizado via GitHub Actions.
+
 Todos os lançamentos do projeto **Gameplay** serão documentados neste arquivo.
 
 ## [1.0.0] - 2026-08-01
