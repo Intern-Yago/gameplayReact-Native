@@ -37,7 +37,7 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Instalar Dependências
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: 🏷️ Incrementar Versão e Atualizar Changelog (Manual Trigger)
         if: ${{ github.event_name == 'workflow_dispatch' }}
