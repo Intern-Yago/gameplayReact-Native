@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GamePlay — Organize suas jogatinas no Discord</title>
+  <meta name="description" content="Aplicação mobile para conectar jogadores e organizar partidas nos seus servidores do Discord. Crie grupos para Ranqueadas, 1x1, Treinos e Amistosos.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome / Feather Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
+  <style>
+    :root {
+      --bg-dark: #090A15;
+      --bg-card: #131530;
+      --bg-card-hover: #191B3E;
+      --primary: #E51C44;
+      --primary-hover: #D01438;
+      --primary-glow: rgba(229, 28, 68, 0.35);
+      --secondary: #1D2766;
+      --discord: #5865F2;
+      --text-heading: #DDE3F0;
+      --text-body: #ABB1CC;
+      --text-muted: #6B7294;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(229, 28, 68, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, h5, h6, .font-heading {
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text-heading);
+    }
+
+    /* Ambient Background Glows */
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-1 {
+      top: -100px;
+      left: 10%;
+      width: 450px;
+      height: 450px;
+      background: rgba(229, 28, 68, 0.18);
+    }
+    .glow-2 {
+      top: 400px;
+      right: 5%;
+      width: 500px;
+      height: 500px;
+      background: rgba(88, 101, 242, 0.15);
+    }
+    .glow-3 {
+      bottom: 200px;
+      left: 20%;
+      width: 600px;
+      height: 600px;
+      background: rgba(229, 28, 68, 0.12);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header Navigation */
+    header {
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      background: rgba(9, 10, 21, 0.85);
+      backdrop-filter: blur(16px);
+      z-index: 100;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .nav-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-heading);
+      text-decoration: none;
+      letter-spacing: 0.5px;
+    }
+    .logo-badge {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--primary), #9B112C);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-body);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 20px var(--primary-glow);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(229, 28, 68, 0.5);
+    }
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-heading);
+      border: 1px solid var(--border-color);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 90px 0 70px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(229, 28, 68, 0.1);
+      border: 1px solid var(--border-glow);
+      border-radius: 50px;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-size: 54px;
+      line-height: 1.15;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, #FFFFFF, var(--text-body));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-title .highlight {
+      background: linear-gradient(135deg, #FF4B6E, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+      font-size: 18px;
+      color: var(--text-body);
+      margin-bottom: 36px;
+      max-width: 520px;
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-image-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+    .hero-img {
+      width: 100%;
+      max-width: 520px;
+      border-radius: 20px;
+      border: 1px solid var(--border-glow);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px var(--primary-glow);
+      transition: transform 0.5s ease;
+    }
+    .hero-img:hover {
+      transform: scale(1.02);
+    }
+
+    /* Stats Section */
+    .stats-bar {
+      margin: 40px 0 90px;
+      padding: 32px 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--text-heading);
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    /* Features Section */
+    .section-header {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 60px;
+    }
+    .section-subtitle {
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin-bottom: 100px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 36px 30px;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-glow);
+      transform: translateY(-6px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(229, 28, 68, 0.15), rgba(29, 39, 102, 0.4));
+      border: 1px solid var(--border-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      margin-bottom: 24px;
+    }
+    .feature-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .feature-desc {
+      font-size: 15px;
+      color: var(--text-body);
+      line-height: 1.6;
+    }
+
+    /* Categories Showcase */
+    .categories-section {
+      padding: 60px 0 100px;
+      background: linear-gradient(180deg, transparent, rgba(19, 21, 48, 0.5), transparent);
+    }
+    .category-pills {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 40px;
+    }
+    .pill-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 20px 32px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.3s;
+    }
+    .pill-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+    .pill-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-heading);
+    }
+
+    /* How It Works */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-bottom: 120px;
+      position: relative;
+    }
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 36px 30px;
+      border-radius: 16px;
+      position: relative;
+    }
+    .step-number {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 48px;
+      font-weight: 700;
+      color: rgba(229, 28, 68, 0.25);
+      position: absolute;
+      top: 20px;
+      right: 24px;
+    }
+    .step-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    /* CTA Section */
+    .cta-banner {
+      background: linear-gradient(135deg, rgba(229, 28, 68, 0.15), rgba(19, 21, 48, 0.9));
+      border: 1px solid var(--border-glow);
+      border-radius: 24px;
+      padding: 70px 40px;
+      text-align: center;
+      margin-bottom: 90px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-title {
+      font-size: 44px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .cta-desc {
+      font-size: 18px;
+      max-width: 600px;
+      margin: 0 auto 36px;
+      color: var(--text-body);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 40px 0;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    footer a {
+      color: var(--text-body);
+      text-decoration: none;
+    }
+    footer a:hover {
+      color: var(--primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .hero-subtitle {
+        margin: 0 auto 36px;
+      }
+      .hero-actions {
+        justify-content: center;
+      }
+      .features-grid, .steps-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .hero-title {
+        font-size: 42px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .nav-links {
+        display: none;
+      }
+      .stats-bar {
+        grid-template-columns: 1fr;
+      }
+      .hero-title {
+        font-size: 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Glows -->
+  <div class="glow-orb glow-1"></div>
+  <div class="glow-orb glow-2"></div>
+  <div class="glow-orb glow-3"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="#" class="logo">
+        <div class="logo-badge">
+          <i data-feather="gamepad"></i>
+        </div>
+        <span class="font-heading">GamePlay</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#recursos">Recursos</a></li>
+        <li><a href="#categorias">Categorias</a></li>
+        <li><a href="#como-funciona">Como Funciona</a></li>
+      </ul>
+
+      <a href="https://github.com/Intern-Yago/gameplayReact-Native/releases/latest" target="_blank" class="btn btn-primary">
+        <i data-feather="download"></i> Baixar APK
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="container hero">
+    <div class="hero-content">
+      <div class="badge-tag">
+        <i data-feather="zap"></i> CONECTE SEUS SERVIDORES NO DISCORD
+      </div>
+      <h1 class="hero-title">
+        <span>Conecte-se e organize suas</span> <span class="highlight">jogatinas no Discord</span>
+      </h1>
+      <p class="hero-subtitle">
+        Crie grupos para jogar seus games favoritos com seus amigos. Agende horários, filtre modalidades e convide seu esquadrão com apenas um toque.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/Intern-Yago/gameplayReact-Native/releases/latest" target="_blank" class="btn btn-primary">
+          <i data-feather="download"></i> Baixar para Android
+        </a>
+        <a href="https://github.com/Intern-Yago/gameplayReact-Native" target="_blank" class="btn btn-secondary">
+          <i data-feather="github"></i> Ver Código no GitHub
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-image-wrapper">
+      <img src="assets/hero_mockup.jpg" alt="GamePlay App Mockup" class="hero-img">
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <section class="container">
+    <div class="stats-bar">
+      <div>
+        <div class="stat-number">100%</div>
+        <div class="stat-label">Gratuito & Open Source</div>
+      </div>
+      <div>
+        <div class="stat-number">Discord</div>
+        <div class="stat-label">OAuth2 Integrado</div>
+      </div>
+      <div>
+        <div class="stat-number">Offline</div>
+        <div class="stat-label">Persistência Local</div>
+      </div>
+      <div>
+        <div class="stat-number">Zero</div>
+        <div class="stat-label">Anúncios ou Interrupções</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="recursos" class="container">
+    <div class="section-header">
+      <div class="section-subtitle">Recursos Principais</div>
+      <h2 class="section-title">Tudo o que você precisa para dominar a partida</h2>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i data-feather="shield"></i>
+        </div>
+        <h3 class="feature-title font-heading">Login Seguro via Discord</h3>
+        <p class="feature-desc">Autenticação simplificada via OAuth2 sem precisar criar novas senhas. Seus dados e servidores são sincronizados instantaneamente.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i data-feather="calendar"></i>
+        </div>
+        <h3 class="feature-title font-heading">Agendamento Inteligente</h3>
+        <p class="feature-desc">Defina o dia, mês, hora e minuto da jogatina, selecione a categoria desejada e adicione uma descrição para o grupo.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i data-feather="users"></i>
+        </div>
+        <h3 class="feature-title font-heading">Status em Tempo Real</h3>
+        <p class="feature-desc">Veja os membros do servidor com status em tempo real (disponível ou ocupado) direto pela integração com os widgets do Discord.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i data-feather="share-2"></i>
+        </div>
+        <h3 class="feature-title font-heading">Compartilhamento Rápido</h3>
+        <p class="feature-desc">Envie o link de convite da partida para seus amigos em qualquer rede social ou aplicativo de mensagem com um clique.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i data-feather="hard-drive"></i>
+        </div>
+        <h3 class="feature-title font-heading">Suporte Offline</h3>
+        <p class="feature-desc">Suas partidas agendadas ficam salvas localmente no dispositivo através do AsyncStorage do React Native.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i data-feather="moon"></i>
+        </div>
+        <h3 class="feature-title font-heading">Design Tema Escuro</h3>
+        <p class="feature-desc">Interface moderna com paleta de cores escuras e detalhes em neon inspirados no ecossistema gamer do Discord.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories Showcase -->
+  <section id="categorias" class="categories-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-subtitle">Modalidades de Jogatina</div>
+        <h2 class="section-title">Encontre o tipo certo de partida para o seu estilo</h2>
+      </div>
+
+      <div class="category-pills">
+        <div class="pill-card">
+          <i data-feather="award" style="color: var(--primary);"></i>
+          <span class="pill-title">Ranqueada</span>
+        </div>
+        <div class="pill-card">
+          <i data-feather="crosshair" style="color: var(--primary);"></i>
+          <span class="pill-title">Duelo 1x1</span>
+        </div>
+        <div class="pill-card">
+          <i data-feather="smile" style="color: var(--primary);"></i>
+          <span class="pill-title">Amistoso</span>
+        </div>
+        <div class="pill-card">
+          <i data-feather="target" style="color: var(--primary);"></i>
+          <span class="pill-title">Treino</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="como-funciona" class="container" style="padding-top: 90px;">
+    <div class="section-header">
+      <div class="section-subtitle">Passo a Passo</div>
+      <h2 class="section-title">Como começar a organizar suas partidas</h2>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">01</div>
+        <h3 class="step-title font-heading">Entre com sua conta</h3>
+        <p class="feature-desc">Abra o GamePlay e faça login com sua conta do Discord para importar seu perfil e lista de servidores em que participa.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">02</div>
+        <h3 class="step-title font-heading">Agende sua Partida</h3>
+        <p class="feature-desc">Escolha a categoria (Ranqueada, Treino, etc.), selecione o servidor Discord desejado, defina a data, horário e descrição.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">03</div>
+        <h3 class="step-title font-heading">Jogue com os Amigos</h3>
+        <p class="feature-desc">Acompanhe quem estará online, compartilhe o link de convite e entre na sala do Discord para começar a jogar!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner -->
+  <section class="container">
+    <div class="cta-banner">
+      <h2 class="cta-title font-heading">Pronto para organizar suas jogatinas?</h2>
+      <p class="cta-desc">Baixe a versão mais recente do GamePlay em APK diretamente para o seu dispositivo Android e nunca mais jogue sozinho.</p>
+      <a href="https://github.com/Intern-Yago/gameplayReact-Native/releases/latest" target="_blank" class="btn btn-primary" style="font-size: 17px; padding: 16px 36px;">
+        <i data-feather="download"></i> Baixar APK Agora
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>Desenvolvido para conectar jogadores — Projeto <strong>GamePlay</strong></p>
+      <p style="margin-top: 8px;">
+        <a href="https://github.com/Intern-Yago/gameplayReact-Native" target="_blank">Código Fonte no GitHub</a> • 
+        Licença MIT
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    feather.replace();
+  </script>
+</body>
+</html>
