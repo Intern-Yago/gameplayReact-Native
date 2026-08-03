@@ -1,0 +1,106 @@
+name: Build & Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Tipo de versão (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  release:
+    name: Build APK & Publish Release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout do Repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: 📦 Instalar Dependências
+        run: npm ci
+
+      - name: 🏷️ Incrementar Versão e Atualizar Changelog (Manual Trigger)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        id: versioning
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Incrementa versão no package.json
+          NEW_VERSION=$(npm version ${{ inputs.release_type }} --no-git-tag-version)
+          TAG_NAME="$NEW_VERSION"
+          
+          # Atualiza versão no app.json
+          node -e "
+            const fs = require('fs');
+            const app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            app.expo.version = '${NEW_VERSION#v}';
+            fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
+          "
+
+          # Atualiza CHANGELOG.md
+          DATE=$(date +'%Y-%m-%d')
+          TEMP_LOG=$(mktemp)
+          echo -e "# Changelog\n\n## [${NEW_VERSION#v}] - $DATE\n- Lançamento automatizado via GitHub Actions.\n" > $TEMP_LOG
+          if [ -f CHANGELOG.md ]; then
+            tail -n +3 CHANGELOG.md >> $TEMP_LOG
+          fi
+          mv $TEMP_LOG CHANGELOG.md
+
+          git add package.json package-lock.json app.json CHANGELOG.md
+          git commit -m "chore(release): $TAG_NAME"
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+          git push origin main --follow-tags
+
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: 📌 Definir Tag da Release
+        id: get_tag
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "TAG=${{ steps.versioning.outputs.TAG_NAME }}" >> $GITHUB_ENV
+          else
+            echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          fi
+
+      - name: 📱 Configurar Expo CLI & EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 🏗️ Gerar Build do APK via EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build --platform android --profile preview --non-interactive --output=gameplay-app.apk
+
+      - name: 🚀 Criar Release no GitHub e Anexar APK
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Release ${{ env.TAG }}
+          body_path: CHANGELOG.md
+          files: gameplay-app.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

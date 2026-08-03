@@ -1,0 +1,14 @@
+# Changelog
+
+Todos os lançamentos do projeto **Gameplay** serão documentados neste arquivo.
+
+## [1.0.0] - 2026-08-01
+
+### Adicionado
+- Autenticação via Discord OAuth2 com suporte a Expo AuthSession.
+- Agendamento de partidas com dados de servidor, horário, categoria e descrição.
+- Integração com AsyncStorage para salvar e carregar dados offline.
+- Perfil do usuário com foto, nome real e funcionalidade de logout.
+- Lista de servidores Discord sincronizada com a API do Discord.
+- Visualização de detalhes da partida, membros online e link de convite.
+- Fluxo de build automatizado via GitHub Actions com geração de APK via EAS Build.

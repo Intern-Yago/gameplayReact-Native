@@ -6,10 +6,17 @@ import {
     SCOPE
 } from './discordAuth'
 
-export{
+import {
+    COLLECTION_USERS,
+    COLLECTION_APPOINTMENTS
+} from './database'
+
+export {
     CDN_IMAGE,
     SCOPE,
     RESPONSE_TYPE,
     REDIRECT_URI,
-    CLIENT_ID
+    CLIENT_ID,
+    COLLECTION_USERS,
+    COLLECTION_APPOINTMENTS
 }
