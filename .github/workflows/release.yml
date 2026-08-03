@@ -1,4 +1,4 @@
-name: Build & Release APK
+name: Expo EAS Build & GitHub Release
 
 on:
   push:
@@ -16,14 +16,14 @@ on:
           - minor
           - major
 
-jobs:
-  release:
-    name: Build APK & Publish Release
-    runs-on: ubuntu-latest
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
-    concurrency:
-      group: release-${{ github.ref }}
-      cancel-in-progress: true
+jobs:
+  build-and-release:
+    name: Build Android APK & Publish GitHub Release
+    runs-on: ubuntu-latest
 
     permissions:
       contents: write
@@ -50,11 +50,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Incrementa versão no package.json
           NEW_VERSION=$(npm version ${{ inputs.release_type }} --no-git-tag-version)
           TAG_NAME="$NEW_VERSION"
           
-          # Atualiza versão no app.json
           node -e "
             const fs = require('fs');
             const app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
@@ -62,7 +60,6 @@ jobs:
             fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
           "
 
-          # Atualiza CHANGELOG.md
           DATE=$(date +'%Y-%m-%d')
           TEMP_LOG=$(mktemp)
           echo -e "# Changelog\n\n## [${NEW_VERSION#v}] - $DATE\n- Lançamento automatizado via GitHub Actions.\n" > $TEMP_LOG
@@ -93,15 +90,17 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 🏗️ Gerar e Baixar Build do APK via EAS Cloud
+      - name: 🔨 Gerar APK Android via EAS Cloud
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          eas build --platform android --profile preview --non-interactive
-          eas build:download --platform android --latest --output ./gameplay-app.apk
+          eas build --platform android --profile preview --non-interactive --json > build-output.json
+          BUILD_URL=$(jq -r '.[0].artifacts.buildUrl' build-output.json)
+          echo "APK_URL=$BUILD_URL" >> $GITHUB_ENV
+          curl -L -o gameplay-app.apk "$BUILD_URL"
 
-      - name: 🚀 Criar Release no GitHub e Anexar APK
-        uses: softprops/action-gh-release@v1
+      - name: 🚀 Publicar Release no GitHub com APK
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
           name: Release ${{ env.TAG }}
