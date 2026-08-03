@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, FlatList } from "react-native";
+import { View, FlatList, TextInput } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -11,11 +11,13 @@ import { ListDivider } from "../../components/ListDivider";
 import { CategorySelect } from "../../components/CategorySelect";
 import { Background } from "../../components/Background";
 import { COLLECTION_APPOINTMENTS } from "../../configs";
+import { theme } from "../../global/styles/theme";
 
 import { styles } from "./style";
 
 export function Home() {
     const [category, setCategory] = useState('');
+    const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [appointments, setAppointments] = useState<AppointmentProps[]>([]);
 
@@ -52,15 +54,31 @@ export function Home() {
         }, [])
     );
 
-    const filteredAppointments = category
-        ? appointments.filter(item => item.category === category)
-        : appointments;
+    const filteredAppointments = appointments.filter(item => {
+        const matchesCategory = category ? item.category === category : true;
+        const matchesSearch = search
+            ? item.guild.name.toLowerCase().includes(search.toLowerCase()) ||
+            (item.description && item.description.toLowerCase().includes(search.toLowerCase()))
+            : true;
+        return matchesCategory && matchesSearch;
+    });
 
     return (
         <Background>
             <View style={styles.header}>
                 <Profile />
                 <ButtonAdd onPress={handleAppointmentCreate} />
+            </View>
+
+            <View style={styles.searchContainer}>
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Buscar por servidor ou descrição..."
+                    placeholderTextColor={theme.color.highlight}
+                    value={search}
+                    onChangeText={setSearch}
+                    autoCorrect={false}
+                />
             </View>
 
             <CategorySelect

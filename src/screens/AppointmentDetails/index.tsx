@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Fontisto } from '@expo/vector-icons';
+import { Fontisto, Feather } from '@expo/vector-icons';
 import { BorderlessButton } from 'react-native-gesture-handler';
-import { ImageBackground, Text, View, FlatList, Alert, Share, Linking, ActivityIndicator } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { ImageBackground, Text, View, FlatList, Alert, Share, Linking, ActivityIndicator, Platform } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { styles } from './style';
 import BannerImg from '../../assets/banner.png';
@@ -16,6 +17,7 @@ import { Member, MemberProps } from '../../components/Member';
 import { Header } from '../../components/Header';
 import { AppointmentProps } from '../../components/Appointment';
 import { api } from '../../services/api';
+import { COLLECTION_APPOINTMENTS } from '../../configs';
 
 type Params = {
     appointmentSelected: AppointmentProps;
@@ -33,6 +35,7 @@ export function AppointmentDetails() {
     const [loading, setLoading] = useState(true);
 
     const route = useRoute();
+    const navigation = useNavigation<any>();
     const { appointmentSelected } = (route.params || {}) as Params;
 
     const defaultAppointment: AppointmentProps = {
@@ -50,7 +53,6 @@ export function AppointmentDetails() {
             const response = await api.get(`/guilds/${appointment.guild.id}/widget.json`);
             setWidget(response.data);
         } catch (error) {
-            // Fallback mock data if widget is disabled or user offline
             setWidget({
                 id: appointment.guild.id,
                 name: appointment.guild.name,
@@ -77,6 +79,26 @@ export function AppointmentDetails() {
         });
     }
 
+    function handleDeleteAppointment() {
+        Alert.alert('Cancelar Partida', 'Deseja remover esta partida agendada?', [
+            { text: 'Não', style: 'cancel' },
+            {
+                text: 'Sim',
+                onPress: async () => {
+                    try {
+                        const storage = await AsyncStorage.getItem(COLLECTION_APPOINTMENTS);
+                        const appointments: AppointmentProps[] = storage ? JSON.parse(storage) : [];
+                        const updated = appointments.filter(item => item.id !== appointment.id);
+                        await AsyncStorage.setItem(COLLECTION_APPOINTMENTS, JSON.stringify(updated));
+                        navigation.navigate('Home');
+                    } catch (e) {
+                        Alert.alert('Erro ao excluir a partida');
+                    }
+                }
+            }
+        ]);
+    }
+
     function handleOpenGuild() {
         if (widget.instant_invite) {
             Linking.openURL(widget.instant_invite);
@@ -94,15 +116,25 @@ export function AppointmentDetails() {
             <Header
                 title="Detalhes"
                 action={
-                    appointment.guild.owner && (
-                        <BorderlessButton onPress={handleShareInvitation}>
-                            <Fontisto
-                                name="share"
-                                size={24}
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <BorderlessButton onPress={handleDeleteAppointment} style={{ marginRight: 16 }}>
+                            <Feather
+                                name="trash-2"
+                                size={22}
                                 color={theme.color.primary}
                             />
                         </BorderlessButton>
-                    )
+
+                        {appointment.guild.owner && (
+                            <BorderlessButton onPress={handleShareInvitation}>
+                                <Fontisto
+                                    name="share"
+                                    size={22}
+                                    color={theme.color.primary}
+                                />
+                            </BorderlessButton>
+                        )}
+                    </View>
                 }
             />
 
@@ -153,5 +185,3 @@ export function AppointmentDetails() {
         </Background>
     );
 }
-
-import { Platform } from 'react-native';

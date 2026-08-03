@@ -1,5 +1,6 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from "react";
 import * as AuthSession from 'expo-auth-session';
+import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
@@ -11,6 +12,8 @@ import {
     COLLECTION_USERS
 } from '../configs';
 import { api } from "../services/api";
+
+const SECURE_TOKEN_KEY = '@gameplay:token';
 
 type User = {
     id: string;
@@ -45,6 +48,17 @@ function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<User>({} as User);
     const [loading, setLoading] = useState(true);
 
+    async function signOut() {
+        setUser({} as User);
+        delete api.defaults.headers.common['Authorization'];
+        await AsyncStorage.removeItem(COLLECTION_USERS);
+        try {
+            await SecureStore.deleteItemAsync(SECURE_TOKEN_KEY);
+        } catch (e) {
+            console.log('SecureStore delete error:', e);
+        }
+    }
+
     async function signIn() {
         try {
             setLoading(true);
@@ -53,12 +67,12 @@ function AuthProvider({ children }: AuthProviderProps) {
             const response = await AuthSession.startAsync({ authUrl }) as AuthorizationResponse;
 
             if (response.type === "success" && !response.params.error) {
-                const token = response.params.access_token;
+                const token = response.params.access_token || '';
                 api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
                 const userInfo = await api.get('/users/@me');
 
-                const firstName = userInfo.data.username.split(' ')[0];
+                const firstName = userInfo.data.username ? userInfo.data.username.split(' ')[0] : 'Jogador';
                 const avatar = userInfo.data.avatar
                     ? `${CDN_IMAGE}/avatars/${userInfo.data.id}/${userInfo.data.avatar}.png`
                     : `https://cdn.discordapp.com/embed/avatars/0.png`;
@@ -67,10 +81,12 @@ function AuthProvider({ children }: AuthProviderProps) {
                     ...userInfo.data,
                     firstName,
                     avatar,
-                    token: token || ''
+                    token
                 };
 
-                await AsyncStorage.setItem(COLLECTION_USERS, JSON.stringify(userData));
+                // Store sensitive token in Hardware-encrypted SecureStore
+                await SecureStore.setItemAsync(SECURE_TOKEN_KEY, token);
+                await AsyncStorage.setItem(COLLECTION_USERS, JSON.stringify({ ...userData, token: '' }));
                 setUser(userData);
             }
         } catch (error) {
@@ -80,21 +96,19 @@ function AuthProvider({ children }: AuthProviderProps) {
         }
     }
 
-    async function signOut() {
-        setUser({} as User);
-        await AsyncStorage.removeItem(COLLECTION_USERS);
-    }
-
     async function loadUserStorageData() {
         try {
+            const token = await SecureStore.getItemAsync(SECURE_TOKEN_KEY);
             const storage = await AsyncStorage.getItem(COLLECTION_USERS);
-            if (storage) {
+
+            if (token && storage) {
                 const userLogged = JSON.parse(storage) as User;
-                api.defaults.headers.common['Authorization'] = `Bearer ${userLogged.token}`;
+                userLogged.token = token;
+                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 setUser(userLogged);
             }
         } catch (error) {
-            console.log(error);
+            console.log('Failed to load user storage:', error);
         } finally {
             setLoading(false);
         }
@@ -102,6 +116,21 @@ function AuthProvider({ children }: AuthProviderProps) {
 
     useEffect(() => {
         loadUserStorageData();
+
+        // Add 401 Unauthorized Interceptor to auto logout on expired token
+        const interceptor = api.interceptors.response.use(
+            response => response,
+            async error => {
+                if (error.response && error.response.status === 401) {
+                    await signOut();
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        return () => {
+            api.interceptors.response.eject(interceptor);
+        };
     }, []);
 
     return (
