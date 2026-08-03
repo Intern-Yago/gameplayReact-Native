@@ -93,7 +93,10 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          eas build --platform android --profile preview --non-interactive --output=gameplay-app.apk
+          eas build --platform android --profile preview --non-interactive --json > build-output.json
+          BUILD_URL=$(jq -r '.[0].artifacts.buildUrl // .artifacts.buildUrl' build-output.json)
+          echo "Baixando APK de: $BUILD_URL"
+          curl -L "$BUILD_URL" -o gameplay-app.apk
 
       - name: 🚀 Criar Release no GitHub e Anexar APK
         uses: softprops/action-gh-release@v1
