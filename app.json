@@ -3,7 +3,7 @@
     "name": "gameplay",
     "slug": "gameplayreact-native",
     "owner": "syri_cotocs",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "gameplay",
