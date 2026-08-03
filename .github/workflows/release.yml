@@ -89,16 +89,12 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 🏗️ Gerar Build do APK via EAS
+      - name: 🏗️ Gerar e Baixar Build do APK via EAS Cloud
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           eas build --platform android --profile preview --non-interactive
-          eas build:list --platform android --limit 1 --json > build-list.json
-          cat build-list.json
-          BUILD_URL=$(jq -r '.[0].artifacts.buildUrl // .artifacts.buildUrl' build-list.json)
-          echo "Baixando APK de: $BUILD_URL"
-          curl -L "$BUILD_URL" -o gameplay-app.apk
+          eas build:download --platform android --latest --output ./gameplay-app.apk
 
       - name: 🚀 Criar Release no GitHub e Anexar APK
         uses: softprops/action-gh-release@v1
