@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.13] - 2026-08-04
+- Lançamento automatizado via GitHub Actions.
+
 ## [1.0.12] - 2026-08-03
 - Lançamento automatizado via GitHub Actions.
 
