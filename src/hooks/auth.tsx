@@ -81,11 +81,14 @@ function AuthProvider({ children }: AuthProviderProps) {
         try {
             setLoading(true);
 
-            // Cria redirect URI compatível com standalone APK e Expo Go
-            const redirectUrl = AuthSession.makeRedirectUri({ scheme: 'gameplay' });
-            const authUrl = `${api.defaults.baseURL}/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI || redirectUrl)}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`;
+            const rawRedirectUri = REDIRECT_URI || 'https://auth.expo.io/@syri_cotocs/gameplayreact-native';
+            const redirectUri = rawRedirectUri.includes('%3A') ? decodeURIComponent(rawRedirectUri) : rawRedirectUri;
+            
+            const scopeParam = SCOPE.includes('%20') ? decodeURIComponent(SCOPE) : SCOPE;
+            
+            const authUrl = `${api.defaults.baseURL}/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=${RESPONSE_TYPE}&scope=${encodeURIComponent(scopeParam)}`;
 
-            const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+            const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
 
             if (result.type === 'success' && result.url) {
                 const paramsString = result.url.split('#')[1] || result.url.split('?')[1] || '';
@@ -115,7 +118,6 @@ function AuthProvider({ children }: AuthProviderProps) {
                 }
             }
 
-            // Se não autenticou ou cancelou no navegador
             if (result.type === 'cancel') {
                 return;
             }
