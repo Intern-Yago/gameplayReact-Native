@@ -17,6 +17,7 @@ import { api } from "../services/api";
 WebBrowser.maybeCompleteAuthSession();
 
 const SECURE_TOKEN_KEY = '@gameplay:token';
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || 'Ov23liJqxdd7JdTxks27';
 
 export type User = {
     id: string;
@@ -31,6 +32,7 @@ type AuthContextData = {
     user: User;
     loading: boolean;
     signIn: () => Promise<void>;
+    signInGithub: () => Promise<void>;
     signInGuest: () => Promise<void>;
     signOut: () => Promise<void>;
 };
@@ -77,13 +79,57 @@ function AuthProvider({ children }: AuthProviderProps) {
         }
     }
 
+    async function signInGithub() {
+        try {
+            setLoading(true);
+            const rawRedirectUri = REDIRECT_URI || 'https://auth.expo.io/@syri_cotocs/gameplayreact-native';
+            const redirectUri = rawRedirectUri.includes('%3A') ? decodeURIComponent(rawRedirectUri) : rawRedirectUri;
+
+            const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user`;
+
+            const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+
+            if (result.type === 'success' && result.url) {
+                const paramsString = result.url.split('?')[1] || '';
+                const params = new URLSearchParams(paramsString);
+                const code = params.get('code');
+
+                if (code) {
+                    const githubUser: User = {
+                        id: 'github_' + Date.now(),
+                        username: 'Dev GitHub',
+                        firstName: 'GitHub',
+                        avatar: 'https://github.com/identicons/app.png',
+                        email: 'developer@github.com',
+                        token: code
+                    };
+
+                    await SecureStore.setItemAsync(SECURE_TOKEN_KEY, code);
+                    await AsyncStorage.setItem(COLLECTION_USERS, JSON.stringify(githubUser));
+                    setUser(githubUser);
+                    return;
+                }
+            }
+
+            if (result.type === 'cancel') {
+                return;
+            }
+
+            throw new Error("Autenticação com GitHub não concluída.");
+        } catch (error: any) {
+            console.log('GitHub Auth error:', error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }
+
     async function signIn() {
         try {
             setLoading(true);
 
             const rawRedirectUri = REDIRECT_URI || 'https://auth.expo.io/@syri_cotocs/gameplayreact-native';
             const redirectUri = rawRedirectUri.includes('%3A') ? decodeURIComponent(rawRedirectUri) : rawRedirectUri;
-            
             const scopeParam = SCOPE.includes('%20') ? decodeURIComponent(SCOPE) : SCOPE;
             
             const authUrl = `${api.defaults.baseURL}/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=${RESPONSE_TYPE}&scope=${encodeURIComponent(scopeParam)}`;
@@ -170,7 +216,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, signIn, signInGuest, signOut, loading }}>
+        <AuthContext.Provider value={{ user, signIn, signInGithub, signInGuest, signOut, loading }}>
             {children}
         </AuthContext.Provider>
     );

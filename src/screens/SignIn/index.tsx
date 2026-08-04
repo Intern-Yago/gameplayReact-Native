@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, View, Image, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 
 import { styles } from './styles';
 import { Background } from '../../components/Background';
@@ -9,15 +10,30 @@ import { useAuth } from '../../hooks/auth';
 import { theme } from '../../global/styles/theme';
 
 export function SignIn() {
-  const { loading, signIn, signInGuest } = useAuth();
+  const { loading, signIn, signInGithub, signInGuest } = useAuth();
 
-  async function handleSignIn() {
+  async function handleSignInDiscord() {
     try {
       await signIn();
     } catch (error) {
       Alert.alert(
         'Autenticação Discord',
         'Não foi possível conectar ao Discord agora. Deseja entrar em modo convidado?',
+        [
+          { text: 'Tentar Novamente', style: 'cancel' },
+          { text: 'Entrar como Convidado', onPress: () => signInGuest() }
+        ]
+      );
+    }
+  }
+
+  async function handleSignInGithub() {
+    try {
+      await signInGithub();
+    } catch (error) {
+      Alert.alert(
+        'Autenticação GitHub',
+        'Não foi possível conectar ao GitHub. Deseja entrar em modo convidado?',
         [
           { text: 'Tentar Novamente', style: 'cancel' },
           { text: 'Entrar como Convidado', onPress: () => signInGuest() }
@@ -53,22 +69,40 @@ export function SignIn() {
             <View style={{ width: '100%', alignItems: 'center' }}>
               <ButtonIcon
                 title="Entrar com Discord"
-                onPress={handleSignIn}
+                onPress={handleSignInDiscord}
               />
+
+              <TouchableOpacity
+                onPress={handleSignInGithub}
+                style={{
+                  width: '100%',
+                  height: 56,
+                  marginTop: 12,
+                  borderRadius: 8,
+                  backgroundColor: theme.color.secondary40,
+                  borderWidth: 1,
+                  borderColor: theme.color.secondary50,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: 16
+                }}
+              >
+                <Feather name="github" size={24} color={theme.color.heading} style={{ marginRight: 16 }} />
+                <Text style={{ flex: 1, textAlign: 'center', fontFamily: theme.fonts.text500, fontSize: 15, color: theme.color.heading }}>
+                  Entrar com GitHub
+                </Text>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={signInGuest}
                 style={{
-                  marginTop: 16,
-                  paddingVertical: 12,
-                  paddingHorizontal: 24,
+                  marginTop: 14,
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
                   borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: theme.color.secondary50,
-                  backgroundColor: theme.color.secondary40
                 }}
               >
-                <Text style={{ fontFamily: theme.fonts.text500, fontSize: 14, color: theme.color.heading }}>
+                <Text style={{ fontFamily: theme.fonts.text400, fontSize: 13, color: theme.color.highlight }}>
                   Entrar como Convidado (Modo Demo)
                 </Text>
               </TouchableOpacity>
