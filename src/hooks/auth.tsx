@@ -1,5 +1,6 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from "react";
 import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -13,9 +14,11 @@ import {
 } from '../configs';
 import { api } from "../services/api";
 
+WebBrowser.maybeCompleteAuthSession();
+
 const SECURE_TOKEN_KEY = '@gameplay:token';
 
-type User = {
+export type User = {
     id: string;
     username: string;
     firstName: string;
@@ -28,18 +31,12 @@ type AuthContextData = {
     user: User;
     loading: boolean;
     signIn: () => Promise<void>;
+    signInGuest: () => Promise<void>;
     signOut: () => Promise<void>;
 };
 
 type AuthProviderProps = {
     children: ReactNode;
-};
-
-type AuthorizationResponse = AuthSession.AuthSessionResult & {
-    params: {
-        access_token?: string;
-        error?: string;
-    };
 };
 
 export const AuthContext = createContext({} as AuthContextData);
@@ -59,38 +56,74 @@ function AuthProvider({ children }: AuthProviderProps) {
         }
     }
 
+    async function signInGuest() {
+        setLoading(true);
+        try {
+            const guestUser: User = {
+                id: 'guest_' + Date.now(),
+                username: 'Jogador Convidado',
+                firstName: 'Jogador',
+                avatar: 'https://github.com/identicons/app.png',
+                email: 'convidado@gameplay.com',
+                token: 'guest_token'
+            };
+
+            await AsyncStorage.setItem(COLLECTION_USERS, JSON.stringify(guestUser));
+            setUser(guestUser);
+        } catch (error) {
+            console.log('Erro ao entrar como convidado:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     async function signIn() {
         try {
             setLoading(true);
-            const authUrl = `${api.defaults.baseURL}/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`;
 
-            const response = await AuthSession.startAsync({ authUrl }) as AuthorizationResponse;
+            // Cria redirect URI compatível com standalone APK e Expo Go
+            const redirectUrl = AuthSession.makeRedirectUri({ scheme: 'gameplay' });
+            const authUrl = `${api.defaults.baseURL}/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI || redirectUrl)}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`;
 
-            if (response.type === "success" && !response.params.error) {
-                const token = response.params.access_token || '';
-                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
 
-                const userInfo = await api.get('/users/@me');
+            if (result.type === 'success' && result.url) {
+                const paramsString = result.url.split('#')[1] || result.url.split('?')[1] || '';
+                const params = new URLSearchParams(paramsString);
+                const token = params.get('access_token');
 
-                const firstName = userInfo.data.username ? userInfo.data.username.split(' ')[0] : 'Jogador';
-                const avatar = userInfo.data.avatar
-                    ? `${CDN_IMAGE}/avatars/${userInfo.data.id}/${userInfo.data.avatar}.png`
-                    : `https://cdn.discordapp.com/embed/avatars/0.png`;
+                if (token) {
+                    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    const userInfo = await api.get('/users/@me');
 
-                const userData: User = {
-                    ...userInfo.data,
-                    firstName,
-                    avatar,
-                    token
-                };
+                    const firstName = userInfo.data.username ? userInfo.data.username.split(' ')[0] : 'Jogador';
+                    const avatar = userInfo.data.avatar
+                        ? `${CDN_IMAGE}/avatars/${userInfo.data.id}/${userInfo.data.avatar}.png`
+                        : `https://cdn.discordapp.com/embed/avatars/0.png`;
 
-                // Store sensitive token in Hardware-encrypted SecureStore
-                await SecureStore.setItemAsync(SECURE_TOKEN_KEY, token);
-                await AsyncStorage.setItem(COLLECTION_USERS, JSON.stringify({ ...userData, token: '' }));
-                setUser(userData);
+                    const userData: User = {
+                        ...userInfo.data,
+                        firstName,
+                        avatar,
+                        token
+                    };
+
+                    await SecureStore.setItemAsync(SECURE_TOKEN_KEY, token);
+                    await AsyncStorage.setItem(COLLECTION_USERS, JSON.stringify({ ...userData, token: '' }));
+                    setUser(userData);
+                    return;
+                }
             }
-        } catch (error) {
-            throw new Error("Não foi possível autenticar");
+
+            // Se não autenticou ou cancelou no navegador
+            if (result.type === 'cancel') {
+                return;
+            }
+
+            throw new Error("Autenticação não concluída no navegador.");
+        } catch (error: any) {
+            console.log('SignIn Auth error:', error);
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -101,10 +134,12 @@ function AuthProvider({ children }: AuthProviderProps) {
             const token = await SecureStore.getItemAsync(SECURE_TOKEN_KEY);
             const storage = await AsyncStorage.getItem(COLLECTION_USERS);
 
-            if (token && storage) {
+            if (storage) {
                 const userLogged = JSON.parse(storage) as User;
-                userLogged.token = token;
-                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                if (token) {
+                    userLogged.token = token;
+                    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                }
                 setUser(userLogged);
             }
         } catch (error) {
@@ -117,7 +152,6 @@ function AuthProvider({ children }: AuthProviderProps) {
     useEffect(() => {
         loadUserStorageData();
 
-        // Add 401 Unauthorized Interceptor to auto logout on expired token
         const interceptor = api.interceptors.response.use(
             response => response,
             async error => {
@@ -134,7 +168,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, signIn, signOut, loading }}>
+        <AuthContext.Provider value={{ user, signIn, signInGuest, signOut, loading }}>
             {children}
         </AuthContext.Provider>
     );
