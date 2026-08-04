@@ -81,16 +81,18 @@ function AuthProvider({ children }: AuthProviderProps) {
         try {
             setLoading(true);
 
-            // Garante a URL de redirecionamento limpa
-            const rawRedirectUri = REDIRECT_URI || 'https://auth.expo.io/@syri_cotocs/gameplayreact-native';
-            const redirectUri = rawRedirectUri.includes('%3A') ? decodeURIComponent(rawRedirectUri) : rawRedirectUri;
+            // Gera a URL de redirecionamento dinamicamente (Expo Go usa proxy/exp://, APK usa gameplay://)
+            const redirectUri = AuthSession.makeRedirectUri({
+                scheme: 'gameplay'
+            });
             
             const scopeParam = SCOPE.includes('%20') ? decodeURIComponent(SCOPE) : SCOPE;
             
             // URL oficial direta do OAuth2 do Discord
             const authUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=${RESPONSE_TYPE}&scope=${encodeURIComponent(scopeParam)}`;
 
-            console.log('Iniciando login no Discord com a URL:', authUrl);
+            console.log('Iniciando login no Discord com Redirect URI:', redirectUri);
+            console.log('URL de autenticação:', authUrl);
 
             const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
 
