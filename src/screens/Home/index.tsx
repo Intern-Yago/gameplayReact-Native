@@ -108,7 +108,7 @@ export function Home() {
                         <Text style={{ fontFamily: theme.fonts.text400, fontSize: 13, color: theme.color.highlight, textAlign: 'center', marginBottom: 20 }}>
                             {search || category
                                 ? 'Nenhuma partida corresponde aos filtros pesquisados.'
-                                ? 'Você ainda não possui partidas. Clique no botão acima para agendar a primeira!'}
+                                : 'Você ainda não possui partidas. Clique no botão acima para agendar a primeira!'}
                         </Text>
 
                         <TouchableOpacity
