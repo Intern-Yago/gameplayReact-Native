@@ -18,6 +18,7 @@ import { Header } from '../../components/Header';
 import { AppointmentProps } from '../../components/Appointment';
 import { api } from '../../services/api';
 import { COLLECTION_APPOINTMENTS } from '../../configs';
+import { cancelAppointmentNotification } from '../../services/notifications';
 
 type Params = {
     appointmentSelected: AppointmentProps;
@@ -86,6 +87,9 @@ export function AppointmentDetails() {
                 text: 'Sim',
                 onPress: async () => {
                     try {
+                        if (appointment.notificationId) {
+                            await cancelAppointmentNotification(appointment.notificationId);
+                        }
                         const storage = await AsyncStorage.getItem(COLLECTION_APPOINTMENTS);
                         const appointments: AppointmentProps[] = storage ? JSON.parse(storage) : [];
                         const updated = appointments.filter(item => item.id !== appointment.id);

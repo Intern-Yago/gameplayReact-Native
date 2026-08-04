@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
-import { View, FlatList, TextInput } from "react-native";
+import { View, FlatList, TextInput, Text, TouchableOpacity } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Feather } from "@expo/vector-icons";
 
 import { Profile } from "../../components/Profile";
 import { ButtonAdd } from "../../components/ButtonAdd";
@@ -98,6 +99,36 @@ export function Home() {
                 showsVerticalScrollIndicator={false}
                 ItemSeparatorComponent={() => <ListDivider />}
                 contentContainerStyle={{ paddingBottom: 69 }}
+                ListEmptyComponent={() => (
+                    <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 40, paddingHorizontal: 32 }}>
+                        <Feather name="calendar" size={48} color={theme.color.highlight} style={{ marginBottom: 12 }} />
+                        <Text style={{ fontFamily: theme.fonts.title700, fontSize: 16, color: theme.color.heading, textAlign: 'center', marginBottom: 8 }}>
+                            Nenhuma partida agendada
+                        </Text>
+                        <Text style={{ fontFamily: theme.fonts.text400, fontSize: 13, color: theme.color.highlight, textAlign: 'center', marginBottom: 20 }}>
+                            {search || category
+                                ? 'Nenhuma partida corresponde aos filtros pesquisados.'
+                                ? 'Você ainda não possui partidas. Clique no botão acima para agendar a primeira!'}
+                        </Text>
+
+                        <TouchableOpacity
+                            onPress={handleAppointmentCreate}
+                            style={{
+                                backgroundColor: theme.color.primary,
+                                paddingVertical: 12,
+                                paddingHorizontal: 24,
+                                borderRadius: 8,
+                                flexDirection: 'row',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <Feather name="plus-circle" size={18} color={theme.color.heading} style={{ marginRight: 8 }} />
+                            <Text style={{ fontFamily: theme.fonts.text500, fontSize: 14, color: theme.color.heading }}>
+                                Agendar Partida
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
                 renderItem={({ item }) => (
                     <Appointment
                         data={item}

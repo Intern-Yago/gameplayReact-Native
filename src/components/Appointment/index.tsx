@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { RectButton, RectButtonProps } from "react-native-gesture-handler";
+import { Feather } from "@expo/vector-icons";
 
 import { styles } from "./style";
 import { GuildProps } from '../Guild';
@@ -17,6 +18,7 @@ export type AppointmentProps = {
     category: string;
     date: string;
     description: string;
+    notificationId?: string;
 };
 
 type Props = RectButtonProps & {
@@ -55,6 +57,14 @@ export function Appointment({ data, ...rest }: Props) {
                             <Text style={styles.date}>
                                 {data.date}
                             </Text>
+                            {data.notificationId && (
+                                <Feather
+                                    name="bell"
+                                    size={14}
+                                    color={primary}
+                                    style={{ marginLeft: 6 }}
+                                />
+                            )}
                         </View>
 
                         <View style={styles.playersInfo}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, View, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { Text, View, ScrollView, KeyboardAvoidingView, Platform, Alert, Switch } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,6 +19,8 @@ import { ModalView } from '../../components/ModalView';
 import { Guilds } from '../Guilds';
 import { GuildProps } from '../../components/Guild';
 import { COLLECTION_APPOINTMENTS } from '../../configs';
+import { categories } from '../../utils/categories';
+import { scheduleAppointmentNotification } from '../../services/notifications';
 
 export function AppointmentCreate() {
     const [category, setCategory] = useState('');
@@ -30,6 +32,7 @@ export function AppointmentCreate() {
     const [hour, setHour] = useState('');
     const [minute, setMinute] = useState('');
     const [description, setDescription] = useState('');
+    const [enableNotification, setEnableNotification] = useState(true);
 
     const navigation = useNavigation<any>();
 
@@ -58,23 +61,68 @@ export function AppointmentCreate() {
             return Alert.alert('Preencha a data e horário da partida');
         }
 
+        const parsedDay = parseInt(day, 10);
+        const parsedMonth = parseInt(month, 10);
+        const parsedHour = parseInt(hour, 10);
+        const parsedMinute = parseInt(minute, 10);
+
+        if (
+            isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31 ||
+            isNaN(parsedMonth) || parsedMonth < 1 || parsedMonth > 12 ||
+            isNaN(parsedHour) || parsedHour < 0 || parsedHour > 23 ||
+            isNaN(parsedMinute) || parsedMinute < 0 || parsedMinute > 59
+        ) {
+            return Alert.alert('Data ou horário inválidos', 'Por favor informe valores numéricos válidos.');
+        }
+
+        const id = String(Date.now());
+        let notificationId: string | undefined = undefined;
+
+        if (enableNotification) {
+            try {
+                const categoryObj = categories.find(item => item.id === category);
+                const categoryTitle = categoryObj ? categoryObj.title : 'Partida';
+
+                const scheduledId = await scheduleAppointmentNotification(
+                    id,
+                    guild.name,
+                    categoryTitle,
+                    day.padStart(2, '0'),
+                    month.padStart(2, '0'),
+                    hour.padStart(2, '0'),
+                    minute.padStart(2, '0')
+                );
+
+                if (scheduledId) {
+                    notificationId = scheduledId;
+                }
+            } catch (err) {
+                console.log('Aviso ao agendar notificação:', err);
+            }
+        }
+
         const newAppointment = {
-            id: String(Date.now()),
+            id,
             guild,
             category,
             date: `${day.padStart(2, '0')}/${month.padStart(2, '0')} às ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}h`,
-            description
+            description,
+            notificationId
         };
 
-        const storage = await AsyncStorage.getItem(COLLECTION_APPOINTMENTS);
-        const appointments = storage ? JSON.parse(storage) : [];
+        try {
+            const storage = await AsyncStorage.getItem(COLLECTION_APPOINTMENTS);
+            const appointments = storage ? JSON.parse(storage) : [];
 
-        await AsyncStorage.setItem(
-            COLLECTION_APPOINTMENTS,
-            JSON.stringify([newAppointment, ...appointments])
-        );
+            await AsyncStorage.setItem(
+                COLLECTION_APPOINTMENTS,
+                JSON.stringify([newAppointment, ...appointments])
+            );
 
-        navigation.navigate('Home');
+            navigation.navigate('Home');
+        } catch (error) {
+            Alert.alert('Erro ao salvar partida', 'Não foi possível salvar o agendamento.');
+        }
     }
 
     return (
@@ -83,7 +131,7 @@ export function AppointmentCreate() {
             style={styles.container}
         >
             <Background>
-                <ScrollView>
+                <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
                     <Header
                         title="Agendar partida"
                     />
@@ -162,7 +210,22 @@ export function AppointmentCreate() {
                             </View>
                         </View>
 
-                        <View style={[styles.field, { marginBottom: 12 }]}>
+                        <View style={[styles.field, { marginTop: 24, alignItems: 'center' }]}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Feather name="bell" size={18} color={theme.color.primary} style={{ marginRight: 8 }} />
+                                <Text style={styles.label}>
+                                    Lembrete de partida
+                                </Text>
+                            </View>
+                            <Switch
+                                trackColor={{ false: theme.color.secondary50, true: theme.color.primary }}
+                                thumbColor={enableNotification ? theme.color.heading : theme.color.highlight}
+                                onValueChange={setEnableNotification}
+                                value={enableNotification}
+                            />
+                        </View>
+
+                        <View style={[styles.field, { marginBottom: 12, marginTop: 24 }]}>
                             <Text style={styles.label}>
                                 Descrição
                             </Text>
